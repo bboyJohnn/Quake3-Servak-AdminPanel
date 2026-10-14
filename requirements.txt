@@ -1,0 +1,3 @@
+aiohttp>=3.9,<4
+# optional: countries of players by IP (also needs an .mmdb database, see README)
+maxminddb>=2.2

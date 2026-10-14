@@ -1,0 +1,13 @@
+# settings and data of your server
+.env
+data/
+
+# extracted from your own pk3 files at start-up (game files, not part of the repository)
+static/maps/
+static/q3/
+
+# Python
+venv/
+.venv/
+__pycache__/
+*.pyc

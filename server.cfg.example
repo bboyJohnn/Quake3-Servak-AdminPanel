@@ -1,0 +1,102 @@
+// An ioquake3 server.cfg with which the panel can do everything: settings,
+// rotations of four modes, the mode queue, statistics.
+// Put it into fs_homepath/baseq3/server.cfg and start the server like this:
+//   ioq3ded +set dedicated 2 +exec server.cfg
+// Numbered sections ("// 1. ...") become group titles on the panel's "Server settings" page.
+
+// ==========================================================
+// 1. NAME AND ACCESS
+// ==========================================================
+seta sv_hostname "My Quake III Server"
+seta g_motd "Welcome to the Arena!"
+seta sv_maxclients 16
+seta rconpassword "change-me-please"    // change it! without it the panel cannot control the server
+seta g_password ""
+
+// ==========================================================
+// 2. LOGS — needed by the panel
+// ==========================================================
+seta g_log "games.log"     // game log: all statistics come from it
+seta g_logSync 0
+seta logfile 1             // console log qconsole.log: start time, for dates of matches
+
+// ==========================================================
+// 3. NETWORK
+// ==========================================================
+seta sv_fps 20
+seta sv_maxRate 25000
+seta sv_maxPing 0
+seta sv_floodProtect 1
+seta sv_allowDownload 1
+seta sv_pure 1
+
+// ==========================================================
+// 4. GAME RULES AND BOTS
+// ==========================================================
+seta timelimit 15
+seta fraglimit 30
+seta capturelimit 8
+seta g_inactivity 600
+seta g_forcerespawn 2
+seta g_allowVote 1
+seta bot_enable 1
+seta bot_nochat 1
+seta bot_minplayers 4      // the server adds bots while there are fewer than 4 players
+seta g_spskill 3
+
+// ==========================================================
+// 5. MASTER SERVERS
+// ==========================================================
+seta sv_master1 "master.ioquake3.org"
+seta sv_master2 "master.quake3arena.com"
+seta sv_master3 "dpmaster.deathmask.net"
+
+// ==========================================================
+// 6. ROTATIONS — the format the panel understands
+// ==========================================================
+// Four rotations: f — free for all, tdm — team deathmatch, tour — tournament,
+// c — capture the flag. Lines are "set <key><number> "..."". The first line of a
+// rotation sets the mode (set g_gametype ...); every line sets a map and the next
+// line in nextmap. The last line of a rotation says where to go next: back to the
+// first line of its own rotation (the mode repeats) or to another rotation — that
+// is how the panel builds the mode queue. Maps and the order of modes are easier
+// to change in the panel.
+
+set f1 "set g_gametype 0; map q3dm17; set nextmap vstr f2"
+set f2 "map q3dm1; set nextmap vstr f3"
+set f3 "map q3dm6; set nextmap vstr f4"
+set f4 "map q3dm7; set nextmap vstr f5"
+set f5 "map q3dm11; set nextmap vstr f6"
+set f6 "map q3dm13; set nextmap vstr tdm1"
+
+set tdm1 "set g_gametype 3; set g_teamAutoJoin 1; set g_teamForceBalance 1; map q3dm6; set nextmap vstr tdm2"
+set tdm2 "map q3dm7; set nextmap vstr tdm3"
+set tdm3 "map q3dm8; set nextmap vstr tdm4"
+set tdm4 "map q3dm9; set nextmap vstr tdm5"
+set tdm5 "map q3dm12; set nextmap vstr tdm6"
+set tdm6 "map q3dm14; set nextmap vstr c1"
+
+set tour1 "set g_gametype 1; map q3tourney1; set nextmap vstr tour2"
+set tour2 "map q3tourney2; set nextmap vstr tour3"
+set tour3 "map q3tourney3; set nextmap vstr tour4"
+set tour4 "map q3tourney4; set nextmap vstr tour5"
+set tour5 "map q3tourney5; set nextmap vstr tour6"
+set tour6 "map q3tourney6; set nextmap vstr tour1"
+
+set c1 "set g_gametype 4; set g_teamAutoJoin 1; set g_teamForceBalance 1; map q3ctf1; set nextmap vstr c2"
+set c2 "map q3ctf2; set nextmap vstr c3"
+set c3 "map q3ctf3; set nextmap vstr c4"
+set c4 "map q3ctf4; set nextmap vstr f1"
+
+// ==========================================================
+// 7. SWITCHING MODES
+// ==========================================================
+set start_ffa     "vstr f1"
+set start_tdm     "vstr tdm1"
+set start_tourney "vstr tour1"
+set start_ctf     "vstr c1"
+
+// ==========================================================
+// 8. WHAT TO START WITH (the last line — the first mode of the queue)
+// ==========================================================
+vstr start_ffa
