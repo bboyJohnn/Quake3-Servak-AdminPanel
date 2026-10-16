@@ -1,52 +1,102 @@
-# Quake III Web Panel for ioquake3
+<p align="center">
+  <img src="docs/banner.jpg" alt="Quake III Web Panel" width="100%">
+</p>
 
-A web control panel for a **Quake III Arena** dedicated server running **[ioquake3](https://ioquake3.org/)**.
-One small Python program on the same machine as the game server; you open it in a browser and manage the
-server without the console.
+<p align="center">
+  <a href="https://ioquake3.org/"><img src="https://img.shields.io/badge/ioquake3-dedicated%20server-ff7a1a?style=for-the-badge" alt="ioquake3"></a>
+  <img src="https://img.shields.io/badge/Python-3.8%2B-3776AB?style=for-the-badge&logo=python&logoColor=white" alt="Python 3.8+">
+  <img src="https://img.shields.io/badge/aiohttp-web%20server-2C5BB4?style=for-the-badge&logo=aiohttp&logoColor=white" alt="aiohttp">
+  <img src="https://img.shields.io/badge/SQLite-statistics-003B57?style=for-the-badge&logo=sqlite&logoColor=white" alt="SQLite">
+  <br>
+  <img src="https://img.shields.io/badge/languages-9-b8336a?style=for-the-badge" alt="9 languages">
+  <img src="https://img.shields.io/badge/Docker-not%20needed-4a4a4a?style=for-the-badge&logo=docker&logoColor=white" alt="Docker not needed">
+  <img src="https://img.shields.io/badge/phone-friendly-e36414?style=for-the-badge" alt="Phone-friendly">
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-2ea44f?style=for-the-badge" alt="MIT license"></a>
+</p>
 
-- **Overview** — map, game mode, who is playing, machine load and memory, totals for all time; hints when
-  something is not set up yet.
-- **Players** — kick, ban by IP (a single address or the whole `/24`), unban, private message, message to
-  everyone, add and remove bots.
-- **Maps and rotations** — which mode is running and which map of its rotation; the **mode queue** (order,
-  turn modes on and off); **load any map in the mode you choose** — with its picture and a hint whether the
-  map was made for that mode, after which the server goes back to the queue from the start; editors of the
-  four rotations (only maps that fit the mode are offered).
-- **Server settings** — the whole `server.cfg` as a form; a copy of the file before every save; changes go to
-  the running server through rcon at once where possible.
-- **Statistics** — visits of human players with date, IP and country; totals per player and a player card
-  (weapons, maps, modes, where they play best, days of the week, when they come); a "Humans at a glance"
-  page with weapons, countries and records; maps and modes, length of visits, ping, a calendar and a
-  "days × hours" heat map; bots separately; maps and recent matches.
-- **Logs** — `qconsole.log` and `games.log` with filter and auto-refresh. **Console** — any rcon command, with
-  a reference of ioquake3 commands. **Audit log** — every action done in the panel.
-- **9 languages** (Russian, English, German, French, Spanish, Portuguese, Polish, Japanese, Chinese),
-  a **"Quake III" look** — backgrounds, menu sounds, the announcer and the game's music, all taken from your
-  own `pak0.pk3` — or a plain light/dark one.
+<p align="center">
+  <b>A web control panel for a Quake III Arena dedicated server running <a href="https://ioquake3.org/">ioquake3</a>.</b><br>
+  One small Python program on the same machine as the game server — open it in a browser and run the server without the console.
+</p>
 
+<p align="center">
+  <a href="#-screenshots"><b>📸 Screenshots</b></a> ·
+  <a href="#-installation-step-by-step"><b>🚀 Install</b></a> ·
+  <a href="#-where-everything-is-configured"><b>⚙️ Configure</b></a> ·
+  <a href="#-troubleshooting"><b>🩺 Troubleshooting</b></a>
+</p>
+
+<p align="center"><img src="docs/screenshots/overview.jpg" alt="Overview page in the Quake III look" width="92%"></p>
+
+## ✨ What it does
+
+| | |
+|---|---|
+| 🏟️ **Overview** | Map, game mode, who is in the arena, machine load and memory, totals for all time — and hints when something is not set up yet. |
+| 👥 **Players** | Kick, ban by IP (one address or the whole `/24`), unban, private message, message to everyone, add and remove bots. |
+| 🗺️ **Maps and rotations** | What is playing and which map of its rotation; the **mode queue** (order, modes on and off); **load any map in the mode you choose** — with its picture and a hint whether the map was made for that mode; editors of the four rotations that offer only maps fitting the mode. |
+| ⚙️ **Server settings** | The whole `server.cfg` as a form. A copy of the file before every save; changes go to the running server through rcon at once where possible. |
+| 📊 **Statistics** | Every visit of a human player with date, country and IP; totals and a **player card** (weapons, maps, modes, where they play best, days of the week, hours); weapons, countries and records of humans; a calendar and a weekdays × hours heat map; bots separately; maps and recent matches. |
+| 📜 **Logs · Console · Audit log** | `qconsole.log` and `games.log` with filter and auto-refresh; any rcon command with a reference of ioquake3 commands; every action done in the panel. |
+| 🌍 **9 languages** | Russian, English, German, French, Spanish, Portuguese, Polish, Japanese, Chinese — the browser's language by default. |
+| 🎨 **Quake III look** | Gothic, tech, space or lava background, menu sounds, the “Fight!” announcer and the game's soundtrack — all read from your own `pak0.pk3`. Or a plain light / dark look. |
+| 📱 **Phone-friendly** | Every page fits a phone screen. |
+
+> [!TIP]
 > All you need is an **ioquake3 server that already runs** — started however you like — and Python.
 > No helper scripts, watchdogs, batch files or Docker on the game server's side; no web server and no
 > database server for the panel either. Statistics live in an SQLite file next to the panel.
 
+## 📸 Screenshots
+
+<table>
+  <tr>
+    <td width="50%"><img src="docs/screenshots/login.jpg" alt="Login"><br><b>Login</b> — the Quake III look: textures and the emblem come from your <code>pak0.pk3</code></td>
+    <td width="50%"><img src="docs/screenshots/maps.jpg" alt="Maps and rotations"><br><b>Maps and rotations</b> — what is playing, the mode queue and every map of the server</td>
+  </tr>
+  <tr>
+    <td><img src="docs/screenshots/load-map.jpg" alt="Load a map"><br><b>Load a map in any mode</b> — the panel tells whether the map was made for it</td>
+    <td><img src="docs/screenshots/humans.jpg" alt="Human players"><br><b>Human players</b> — every visit with time, country and IP</td>
+  </tr>
+  <tr>
+    <td><img src="docs/screenshots/summary.jpg" alt="Human summary"><br><b>Human summary</b> — weapons, countries, records</td>
+    <td><img src="docs/screenshots/player-card.jpg" alt="Player card"><br><b>Player card</b> — weapons, maps, modes, best maps, days of the week</td>
+  </tr>
+  <tr>
+    <td><img src="docs/screenshots/calendar.jpg" alt="Calendar"><br><b>Calendar</b> — visits per day and a weekdays × hours heat map</td>
+    <td><img src="docs/screenshots/prefs.jpg" alt="Panel settings"><br><b>Panel settings</b> — 9 languages, 4 backgrounds, sounds and the game's music</td>
+  </tr>
+  <tr>
+    <td><img src="docs/screenshots/plain-light.png" alt="Plain look, light"><br><b>Plain look</b> — light…</td>
+    <td><img src="docs/screenshots/plain-dark.jpg" alt="Plain look, dark"><br>…and dark</td>
+  </tr>
+  <tr>
+    <td><img src="docs/screenshots/japanese.jpg" alt="Japanese interface"><br><b>日本語</b> — and eight more languages</td>
+    <td><img src="docs/screenshots/mobile.jpg" alt="On a phone"><br><b>On a phone</b> — overview, statistics, maps</td>
+  </tr>
+</table>
+
+<sub>The screenshots were taken with demo data: nicknames and IP addresses (from the ranges reserved for documentation) are made up.</sub>
+
 ---
 
-## Contents
+## 📖 Contents
 
-1. [Requirements](#requirements)
-2. [Installation, step by step](#installation-step-by-step)
-3. [Where everything is configured](#where-everything-is-configured)
-4. [Rotations and the mode queue](#rotations-and-the-mode-queue)
-5. [Updating](#updating)
-6. [How it works](#how-it-works)
-7. [Security](#security)
-8. [Troubleshooting](#troubleshooting)
-9. [Translations](#translations)
-10. [Project layout](#project-layout)
-11. [Legal](#legal)
+1. [Requirements](#-requirements)
+2. [Installation, step by step](#-installation-step-by-step)
+3. [Where everything is configured](#-where-everything-is-configured)
+4. [Rotations and the mode queue](#-rotations-and-the-mode-queue)
+5. [Updating](#-updating)
+6. [How it works](#-how-it-works)
+7. [Security](#-security)
+8. [Troubleshooting](#-troubleshooting)
+9. [Translations](#-translations)
+10. [Project layout](#-project-layout)
+11. [Legal](#-legal)
 
 ---
 
-## Requirements
+## 🧰 Requirements
 
 | What | Notes |
 |---|---|
@@ -67,7 +117,7 @@ Replace these with your own paths and user everywhere.
 
 ---
 
-## Installation, step by step
+## 🚀 Installation, step by step
 
 ### Step 1. Look at your server
 
@@ -96,9 +146,12 @@ seta g_log "games.log"                // without it there are no statistics
 seta logfile 1                        // optional, gives exact dates of matches
 ```
 
-Restart the game server after adding them. To use the rotation editor and the mode queue, write the
+> [!IMPORTANT]
+> Restart the game server after adding them.
+
+To use the rotation editor and the mode queue, write the
 rotations in the format the panel understands — see [`server.cfg.example`](server.cfg.example) and
-[Rotations and the mode queue](#rotations-and-the-mode-queue). Everything else works with any `server.cfg`.
+[Rotations and the mode queue](#-rotations-and-the-mode-queue). Everything else works with any `server.cfg`.
 
 ### Step 3. Install Python and git
 
@@ -117,7 +170,7 @@ python3 --version
 ### Step 4. Download the panel and install its packages
 
 ```bash
-sudo git clone https://github.com/<you>/<repo>.git /opt/q3panel
+sudo git clone https://github.com/bboyJohnn/Quake3-Servak-AdminPanel.git /opt/q3panel
 ```
 
 ```bash
@@ -200,8 +253,9 @@ Settings: /opt/q3panel/.env
 Panel will listen on 127.0.0.1:8091 and accept 127.0.0.1/32, ::1/128
 ```
 
-`FAIL` lines must be fixed (see [Troubleshooting](#troubleshooting)); `warn` lines are optional features.
-The command exits with code 0 when there are no `FAIL`s.
+> [!NOTE]
+> `FAIL` lines must be fixed (see [Troubleshooting](#-troubleshooting)); `warn` lines are optional features.
+> The command exits with code 0 when there are no `FAIL`s.
 
 ### Step 7. Start the panel
 
@@ -278,7 +332,11 @@ PANEL_ALLOWED_PEERS=127.0.0.1,::1,192.168.1.0/24
 sudo systemctl restart q3panel
 ```
 
-Open `http://<server-lan-ip>:8091`. The panel speaks plain HTTP — **do not open this port to the internet.**
+Open `http://<server-lan-ip>:8091`.
+
+> [!WARNING]
+> The panel speaks plain HTTP — **do not open this port to the internet.** From outside use the SSH tunnel (A)
+> or a reverse proxy with HTTPS (C).
 
 **C. From the internet, with HTTPS** — put nginx in front of the panel and keep the panel on `127.0.0.1`:
 
@@ -317,7 +375,7 @@ notices the new file by itself within an hour. Another place: set `GEOIP_DB` in 
 
 ---
 
-## Where everything is configured
+## ⚙️ Where everything is configured
 
 **`.env`** next to `app.py` — the only settings file of the panel. `.env.example` lists every key with a
 comment. A value may refer to a key above it (`${Q3_HOME}/baseq3`); text after ` #` is a comment.
@@ -363,7 +421,7 @@ pk3 files at every start; they are not part of the repository.
 
 ---
 
-## Rotations and the mode queue
+## 🔁 Rotations and the mode queue
 
 Map loading, map changes and statistics work with any `server.cfg`. The rotation editor and the mode queue
 understand this format (a full example: [`server.cfg.example`](server.cfg.example)):
@@ -400,7 +458,7 @@ happens next:
 
 ---
 
-## Updating
+## ⬆️ Updating
 
 ```bash
 cd /opt/q3panel
@@ -423,7 +481,7 @@ changes in a new version, the panel updates it by itself at start.
 
 ---
 
-## How it works
+## 🔧 How it works
 
 - **`getstatus` over UDP** — the same query a server browser sends: map, mode, players, score, ping. Every
   20 seconds the panel notes who came and who left.
@@ -450,7 +508,7 @@ changes in a new version, the panel updates it by itself at start.
 
 ---
 
-## Security
+## 🔒 Security
 
 - The panel **password** is stored as an scrypt hash; after 5 wrong attempts within 5 minutes logins pause
   for 5 minutes (one limit for everyone, not per address).
@@ -467,7 +525,7 @@ changes in a new version, the panel updates it by itself at start.
 
 ---
 
-## Troubleshooting
+## 🩺 Troubleshooting
 
 | Symptom | Cause and fix |
 |---|---|
@@ -479,14 +537,14 @@ changes in a new version, the panel updates it by itself at start.
 | Matches without dates or with "≈" | `seta logfile 1` missing (dates then come only from what the panel saw). |
 | Saving settings fails with "Permission denied" | The panel runs as a different user than the owner of `server.cfg`. Run the panel as the server's user. |
 | No map pictures, no backgrounds, sounds or music | `PAK_DIRS` does not contain the folder with `pak0.pk3`. |
-| The rotation editor is empty | Your rotations are not in the panel's format — see [Rotations](#rotations-and-the-mode-queue). |
+| The rotation editor is empty | Your rotations are not in the panel's format — see [Rotations](#-rotations-and-the-mode-queue). |
 | No countries next to IPs | No `.mmdb` database (step 9). |
 | A yellow "Check the panel setup" box on the Overview | It names the path or setting to fix. |
 | Any other error | `journalctl -u q3panel -n 100` shows the panel's errors; `venv/bin/python app.py --check` shows what it found. |
 
 ---
 
-## Translations
+## 🌍 Translations
 
 The interface is written in Russian; every text in `static/app.js` is wrapped in `L('…')`, and that Russian
 text is the translation key. Dictionaries: `static/i18n/<code>.js`. Messages of the server (`app.py` and
@@ -499,7 +557,7 @@ there. A missing translation shows the Russian text, nothing breaks. Code commen
 
 ---
 
-## Project layout
+## 📁 Project layout
 
 ```
 app.py                  the web server (aiohttp): settings, API, login, --password, --check
@@ -520,7 +578,7 @@ requirements.txt        aiohttp, maxminddb
 
 ---
 
-## Legal
+## ⚖️ Legal
 
 The panel's code is MIT (see [LICENSE](LICENSE)). Flags: [flag-icons](https://github.com/lipis/flag-icons),
 MIT, see `static/flags/LICENSE`. Fonts: [Russo One](https://fonts.google.com/specimen/Russo+One) and
@@ -529,3 +587,6 @@ MIT, see `static/flags/LICENSE`. Fonts: [Russo One](https://fonts.google.com/spe
 Quake III Arena® is a trademark of id Software LLC, a ZeniMax Media company. This project is not affiliated
 with or endorsed by id Software or ZeniMax. The repository contains no game files: map pictures, textures,
 sounds and music are read from your own copy of the game.
+
+The screenshots in `docs/` show artwork of Quake III Arena (textures, map pictures) that the panel reads from
+the game's own files; it belongs to id Software.
