@@ -22,7 +22,7 @@
 <p align="center">
   <a href="#-screenshots"><b>📸 Screenshots</b></a> ·
   <a href="#-installation-step-by-step"><b>🚀 Install</b></a> ·
-  <a href="#-where-everything-is-configured"><b>⚙️ Configure</b></a> ·
+  <a href="#-where-everything-is-configured"><b>🧩 Configure</b></a> ·
   <a href="#-troubleshooting"><b>🩺 Troubleshooting</b></a>
 </p>
 
@@ -375,7 +375,7 @@ notices the new file by itself within an hour. Another place: set `GEOIP_DB` in 
 
 ---
 
-## ⚙️ Where everything is configured
+## 🧩 Where everything is configured
 
 **`.env`** next to `app.py` — the only settings file of the panel. `.env.example` lists every key with a
 comment. A value may refer to a key above it (`${Q3_HOME}/baseq3`); text after ` #` is a comment.
@@ -458,7 +458,7 @@ happens next:
 
 ---
 
-## ⬆️ Updating
+## 🔄 Updating
 
 ```bash
 cd /opt/q3panel
@@ -578,7 +578,7 @@ requirements.txt        aiohttp, maxminddb
 
 ---
 
-## ⚖️ Legal
+## 📜 Legal
 
 The panel's code is MIT (see [LICENSE](LICENSE)). Flags: [flag-icons](https://github.com/lipis/flag-icons),
 MIT, see `static/flags/LICENSE`. Fonts: [Russo One](https://fonts.google.com/specimen/Russo+One) and
