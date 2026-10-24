@@ -488,3 +488,17 @@ h3 { font-size: 14px; margin: 0 0 8px; }
 :root[data-style="q3"] ::-webkit-scrollbar { width: 10px; height: 10px; }
 :root[data-style="q3"] ::-webkit-scrollbar-thumb { background: #4a3324; border-radius: 5px; }
 :root[data-style="q3"] ::-webkit-scrollbar-track { background: #0d0906; }
+
+/* Длинные списки по страницам: кнопки 1 2 3 … под таблицей */
+.pager { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: 10px; }
+.pager .pg { min-width: 34px; padding: 4px 9px; border: 1px solid var(--line); border-radius: 6px; background: transparent;
+  color: var(--ink); font: inherit; cursor: pointer; }
+.pager .pg:hover:not(:disabled) { border-color: var(--accent); }
+.pager .pg.active { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+.pager .pg:disabled { opacity: .4; cursor: default; }
+.pager .pg-gap { padding: 0 2px; color: var(--muted); }
+.pager .pg-count { margin-left: auto; }
+:root[data-style="q3"] .pager .pg { border-radius: 3px; border-color: #5a3d27; color: #e3cdab; background: rgba(20, 14, 10, .7); }
+:root[data-style="q3"] .pager .pg.active { background: linear-gradient(180deg, #d0401c, #7a1c0b); border-color: #ff6a3a; color: #fff; }
+.pc-cal h3 { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.bk-actions { display: flex; gap: 8px; flex-wrap: wrap; }

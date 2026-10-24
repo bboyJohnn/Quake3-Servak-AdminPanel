@@ -25,12 +25,14 @@ import os
 import re
 import secrets
 import sys
+import tempfile
 import time
 import zipfile
 
 from aiohttp import web
 
 import audit as audit_mod
+import backups as backups_mod
 import cfg as cfg_mod
 import geo as geo_mod
 import humans as humans_mod
@@ -259,6 +261,11 @@ class Panel:
         self.stats = stats_mod.Stats(db, self.paths["games_log"])
         self.audit = audit_mod.Audit(db)
         self.presence = presence_mod.Presence(db)
+        # копии статистики (panel.db): BACKUP_DAYS — сколько дней хранить, 0 — не делать
+        self.backups = backups_mod.Backups(db, env.get("BACKUP_DIR") or os.path.join(data, "backups"),
+                                           int(env.get("BACKUP_DAYS") or 0))
+        # фоновые записи в базу и восстановление копии статистики идут по очереди
+        self.db_lock = asyncio.Lock()
         self.mode_order_file = os.path.join(data, "mode-order.txt")
         self.geo = geo_mod.Geo(data, env.get("GEOIP_DB", ""))
         # снимки карт из pk3 — в static/maps, при каждом запуске (новые карты подхватятся)
@@ -284,6 +291,7 @@ class Panel:
         self.peers = parse_peers(env.get("PANEL_ALLOWED_PEERS"))
         # как панель называет сервер: меню, экран входа, вкладка браузера; адрес для игроков
         self.site = {"title": env.get("PANEL_TITLE", ""), "address": env.get("PANEL_ADDRESS", "")}
+        self.site["backups"] = self.backups.days > 0     # вкладка «Бэкап»
         self.login_fails = []
         self.maps_cache = None
 
@@ -291,6 +299,11 @@ class Panel:
 
     async def blocking(self, fn, *args):
         return await asyncio.get_running_loop().run_in_executor(None, fn, *args)
+
+    async def db_write(self, fn):
+        """Запись в базу из фона — не во время восстановления копии. fn без аргументов."""
+        async with self.db_lock:
+            return await self.blocking(fn)
 
     async def rcon(self, action, command, detail=""):
         """rcon с записью в журнал. Ошибку превращает в понятный ответ."""
@@ -853,11 +866,73 @@ class Panel:
     async def commands(self, request):
         return ok([{"cmd": c, "help": h} for c, h in q3_mod.COMMANDS])
 
+    # --- копии статистики ---------------------------------------------
+
+    async def backups_view(self, request):
+        need(self.backups.days > 0, "копии статистики выключены (BACKUP_DAYS в .env)")
+        return ok({"days": self.backups.days, "items": await self.blocking(self.backups.items)})
+
+    async def backups_action(self, request):
+        need(self.backups.days > 0, "копии статистики выключены (BACKUP_DAYS в .env)")
+        body = await request.json()
+        action = body.get("action")
+        if action == "create":
+            item = await self.blocking(self.backups.create, "manual")
+            self.audit.log("копия статистики", item["name"])
+        elif action == "restore":
+            async with self.db_lock:
+                try:
+                    chosen, before = await self.blocking(self.backups.restore, str(body.get("name", "")))
+                except (LookupError, ValueError) as e:
+                    raise ApiError(str(e))
+                # статистика дочитает игровой лог с позиции из копии сразу
+                await self.blocking(self.stats.update)
+            self.audit.log("восстановление статистики", "из %s, прежняя сохранена в %s" % (chosen["name"], before["name"]))
+        else:
+            raise ApiError("неизвестное действие")
+        return ok({"days": self.backups.days, "items": await self.blocking(self.backups.items)})
+
+    async def backup_file(self, request):
+        """Скачать копию: файл .db.gz, имя — с названием контейнера, чтобы на компьютере не путать серверы."""
+        need(self.backups.days > 0, "копии статистики выключены (BACKUP_DAYS в .env)")
+        name = request.query.get("name", "")
+        try:
+            path = self.backups.path_of(name)
+        except LookupError as e:
+            raise ApiError(str(e), 404)
+        container = self.env.get("CONTAINER", "")
+        prefix = re.sub(r"[^\w.-]+", "_", container) + "-" if container else ""
+        return web.FileResponse(path, headers={"Content-Type": "application/gzip",
+                                               "Content-Disposition": 'attachment; filename="%s%s"' % (prefix, name)})
+
+    async def backup_upload(self, request):
+        """Копия с компьютера: тело запроса — сам файл. Проверяется и ложится в список («с компьютера»)."""
+        need(self.backups.days > 0, "копии статистики выключены (BACKUP_DAYS в .env)")
+        os.makedirs(self.backups.folder, exist_ok=True)
+        fd, tmp = tempfile.mkstemp(suffix=".upload", dir=self.backups.folder)
+        try:
+            size = 0
+            with os.fdopen(fd, "wb") as f:
+                # читаем потоком: ограничение размера запроса — для обычных запросов, копия больше
+                async for chunk in request.content.iter_chunked(65536):
+                    size += len(chunk)
+                    need(size <= backups_mod.MAX_UPLOAD, "файл больше %d МБ" % (backups_mod.MAX_UPLOAD // 2 ** 20))
+                    f.write(chunk)
+            need(size > 0, "пустой файл")
+            try:
+                item = await self.blocking(self.backups.add, tmp)
+            except ValueError as e:
+                raise ApiError(str(e))
+        finally:
+            os.remove(tmp)
+        self.audit.log("копия статистики", "загружена с компьютера: %s" % item["name"])
+        return ok({"item": item, "days": self.backups.days, "items": await self.blocking(self.backups.items)})
+
     async def audit_view(self, request):
         return ok(await self.blocking(self.audit.recent, 300))
 
     async def stats_refresh(self, request):
-        added = await self.blocking(self.stats.update)
+        added = await self.db_write(self.stats.update)
         return ok({"added": added})
 
     # --- фоновое ------------------------------------------------------
@@ -871,17 +946,17 @@ class Panel:
             # новая схема базы: один раз перечитать оба игровых лога целиком
             try:
                 if await self.blocking(self.stats.needs_rebuild):
-                    n = await self.blocking(self.stats.rebuild, games_logs)
+                    n = await self.db_write(lambda: self.stats.rebuild(games_logs))
                     print("stats: логи перечитаны заново, матчей %d" % n, flush=True)
             except Exception as e:
                 print("stats rebuild: %s" % e, file=sys.stderr, flush=True)
             i = 0
             while True:
                 try:
-                    await self.blocking(self.stats.update)
+                    await self.db_write(self.stats.update)
                     if i % 5 == 0:  # даты матчей — раз в 5 минут: лог консоли + замеченные начала
                         observed = await self.blocking(self.presence.map_starts)
-                        n = await self.blocking(self.stats.restore_times, console_logs, observed)
+                        n = await self.db_write(lambda: self.stats.restore_times(console_logs, observed))
                         if n:
                             print("stats: восстановлено дат матчей %d" % n, flush=True)
                 except Exception as e:  # статистика не должна ронять панель
@@ -904,15 +979,26 @@ class Panel:
                                     addresses[r["name"]] = humans_mod.ip_of(r["address"]) or None
                         except RuntimeError:
                             pass
-                    await self.blocking(self.presence.tick, players,
-                                        info.get("mapname") if info else None, None, addresses)
+                    await self.db_write(lambda: self.presence.tick(players, info.get("mapname") if info else None,
+                                                                   None, addresses))
                     if info:  # смена карты = начало матча, точная опора для дат матчей
-                        await self.blocking(self.presence.observe_map, info.get("mapname"), players)
+                        await self.db_write(lambda: self.presence.observe_map(info.get("mapname"), players))
                 except Exception as e:
                     print("presence: %s" % e, file=sys.stderr, flush=True)
                 await asyncio.sleep(20)
 
-        tasks = [asyncio.create_task(loop()), asyncio.create_task(presence_loop())]
+        async def backup_loop():
+            # копия статистики раз в сутки (BACKUP_DAYS), старые убираются
+            await asyncio.sleep(120)
+            while self.backups.days > 0:
+                try:
+                    if await self.blocking(self.backups.due):
+                        await self.blocking(self.backups.create, "auto")
+                except Exception as e:
+                    print("backup: %r" % e, file=sys.stderr, flush=True)
+                await asyncio.sleep(3600)
+
+        tasks = [asyncio.create_task(loop()), asyncio.create_task(presence_loop()), asyncio.create_task(backup_loop())]
         yield
         for t in tasks:
             t.cancel()
@@ -982,6 +1068,10 @@ def build_app(panel):
     r.add_post("/api/console", panel.console)
     r.add_get("/api/commands", panel.commands)
     r.add_get("/api/audit", panel.audit_view)
+    r.add_get("/api/backups", panel.backups_view)
+    r.add_post("/api/backups", panel.backups_action)
+    r.add_get("/api/backups/file", panel.backup_file)
+    r.add_post("/api/backups/upload", panel.backup_upload)
 
     static = os.path.join(BASE, "static")
 
@@ -1044,6 +1134,9 @@ def check_setup(env):
         len(art["backgrounds"]), len(art["sounds"]), len(art["music"])), warn=True)
     geo = geo_mod.Geo(p["data"], env.get("GEOIP_DB", ""))
     line(geo.country("8.8.8.8") is not None, "GeoIP database", "optional, countries of players' IPs", warn=True)
+    days = int(env.get("BACKUP_DAYS") or 0)
+    line(days > 0, "Stats backups", "%s, last %d days" % (env.get("BACKUP_DIR") or os.path.join(p["data"], "backups"), days)
+         if days else "off (BACKUP_DAYS)", warn=True)
     try:
         os.makedirs(p["data"], mode=0o700, exist_ok=True)
         line(os.access(p["data"], os.W_OK), "Panel data folder", p["data"])

@@ -170,7 +170,7 @@ def card(key, sessions, geo, weapons, players=(), modes=(), maps_log=()):
         "recent": [{"name": s["name"], "joined_at": s["joined_at"], "duration": s["duration"],
                     "kills": s["kills"], "deaths": s["deaths"], "online": s["online"], "maps": s["maps"],
                     "approx": bool(s.get("approx"))}
-                   for s in mine[:8]],
+                   for s in mine[:1000]],
         "weapons": weapons[:6],
         "same_names_from": others,
         # [начало, длительность] всех заходов: дни на сервере и дни недели браузер
